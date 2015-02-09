@@ -559,7 +559,7 @@ class ModularInput():
         if s is not None:
             s = str(s)
         
-        # Escape the spaces within the string
+        # Escape the spaces within the string (will need KV_MODE = auto_escaped for this to work)
         if s is not None:
             s = s.replace('"', '\\"')
             s = s.replace("'", "\\'")

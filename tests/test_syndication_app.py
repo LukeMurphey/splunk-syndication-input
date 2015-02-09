@@ -12,8 +12,14 @@ from syndication import SyndicationModularInput
 
 class TestSyndicationImport(unittest.TestCase):
     
-    def test_import_feed(self):
+    def test_import_rss(self):
         results = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet")
+        #print results[0]
+        self.assertGreaterEqual(len(results), 10)
+        
+    def test_import_atom(self):
+        
+        results = SyndicationModularInput.get_feed("http://currentworldnews.blogspot.com/atom.xml")
         #print results[0]
         self.assertGreaterEqual(len(results), 10)
         
