@@ -1068,6 +1068,12 @@ class ModularInput():
                 raise
             else:
                 return None
+            
+        except ValueError:
+            if throw_errors:
+                raise
+            else:
+                return None
         
         finally:
             if fp is not None:

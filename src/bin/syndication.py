@@ -2,7 +2,7 @@ import sys
 import json
 import time
 
-from syndication_app.modular_input import ModularInput, URLField, DurationField
+from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field, IntegerField
 from syndication_app import feedparser
 
 class SyndicationModularInput(ModularInput):
@@ -13,28 +13,61 @@ class SyndicationModularInput(ModularInput):
     def __init__(self):
 
         scheme_args = {'title': "Syndication Feed (RSS, ATOM, RDF)",
-                       'description': "Allows you to import feeds (RSS, ATOM, RDF) into Splunk",
+                       'description': "Import syndication feeds (RSS, ATOM, RDF)",
                        'use_external_validation': "true",
                        'streaming_mode': "xml",
                        'use_single_instance': "true"}
         
         args = [
                 URLField("url", "Feed URL", "The URL of the feed to input", empty_allowed=False),
+                BooleanField("include_only_changed", "Include only new or changed entries", "Only include entries that has not been indexed yet (won't get items that were already observed)", empty_allowed=False),
                 DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False)
                 ]
         
         ModularInput.__init__( self, scheme_args, args, logger_name='syndication_modular_input' )
         
     @classmethod
-    def get_feed(cls, feed_url):
+    def get_updated_date(cls, entry):
+        
+        if 'updated_parsed' in entry:
+            return entry.updated_parsed
+         
+        if 'published_parsed' in entry:
+            return entry.published_parsed
+        
+        return None
+        
+        
+    @classmethod
+    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None):
         d = feedparser.parse(feed_url)
         
         entries = []
+        latest_date = None
         
         for entry in d.entries:
+            
+            # Get the updated or published date
+            entry_date = cls.get_updated_date(entry)
+            
+            # Perform the operations that are based on the date
+            if entry_date is not None:
+                
+                # If this is the latest one, then save it
+                if latest_date is None or entry_date > latest_date:
+                    latest_date = entry_date
+                    
+                # If the item is earlier than the date we are to include, then skip it
+                if include_later_than is not None and entry_date <= include_later_than:
+                    continue
+                
             entries.append(cls.flatten(entry))
         
-        return entries
+        # Return the latest date if requested
+        if return_latest_date:
+            return entries, latest_date
+        else:
+            return entries
     
     @classmethod
     def flatten(cls, item, dictionary=None, name=None):
@@ -80,21 +113,49 @@ class SyndicationModularInput(ModularInput):
             
         return dictionary
             
+            
+    def save_checkpoint(self, checkpoint_dir, stanza, last_run, last_entry_date):
+        """
+        Save the checkpoint state.
+        
+        Arguments:
+        checkpoint_dir -- The directory where checkpoints ought to be saved
+        stanza -- The stanza of the input being used
+        last_run -- The time when the analysis was last performed
+        last_entry_date -- The date of the last entry that was imported
+        """
+                
+        self.save_checkpoint_data(checkpoint_dir, stanza, { 'last_run' : last_run,
+                                                            'last_entry_date' : time.mktime(last_entry_date)
+                                                           })
         
     def run(self, stanza, cleaned_params, input_config):
         
         # Make the parameters
-        interval        = cleaned_params["interval"]
-        feed_url        = cleaned_params["url"]
-        sourcetype      = cleaned_params.get("sourcetype", "syndication")
-        host            = cleaned_params.get("host", None)
-        index           = cleaned_params.get("index", "default")
-        source          = stanza
+        interval             = cleaned_params["interval"]
+        feed_url             = cleaned_params["url"]
+        include_only_changed = cleaned_params.get("include_only_changed", True)
+        sourcetype           = cleaned_params.get("sourcetype", "syndication")
+        host                 = cleaned_params.get("host", None)
+        index                = cleaned_params.get("index", "default")
+        source               = stanza
         
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
             
+            # Get the date of the latest entry imported
+            try:
+                checkpoint_data = self.get_checkpoint_data(input_config.checkpoint_dir, stanza, throw_errors=True)
+            except:
+                self.logger.exception("Exception generated when attempting to load the check-point data")
+                checkpoint_data = None
+            
+            if include_only_changed and checkpoint_data is not None and 'last_entry_date' in checkpoint_data:
+                last_entry_date = time.localtime(checkpoint_data['last_entry_date'])
+            else:
+                last_entry_date = None
+            
             # Get the feed information
-            results = self.get_feed(feed_url.geturl())
+            results, last_entry_date = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date)
             self.logger.info("Got results, count=%i, url=%s", len(results), feed_url.geturl())
             
             # Output the event
@@ -102,11 +163,13 @@ class SyndicationModularInput(ModularInput):
                 self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
                 
             # Get the time that the input last ran
-            last_ran = self.last_ran(input_config.checkpoint_dir, stanza)
+            if checkpoint_data is not None and 'last_ran' in checkpoint_data:
+                last_ran = checkpoint_data['last_ran']
+            else:
+                last_ran = None
             
             # Save the checkpoint so that we remember when we last
-            self.save_checkpoint_data(input_config.checkpoint_dir, stanza, {"last_run" : self.get_non_deviated_last_run(last_ran, interval, stanza) })
-        
+            self.save_checkpoint(input_config.checkpoint_dir, stanza,  self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
             
 if __name__ == '__main__':
     try:
