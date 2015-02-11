@@ -1,8 +1,7 @@
 import sys
-import json
 import time
 
-from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field, IntegerField
+from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField
 from syndication_app import feedparser
 
 class SyndicationModularInput(ModularInput):
@@ -39,7 +38,7 @@ class SyndicationModularInput(ModularInput):
         
         
     @classmethod
-    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None):
+    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None):
         d = feedparser.parse(feed_url)
         
         entries = []
@@ -59,6 +58,10 @@ class SyndicationModularInput(ModularInput):
                     
                 # If the item is earlier than the date we are to include, then skip it
                 if include_later_than is not None and entry_date <= include_later_than:
+                    
+                    if logger is not None:
+                        logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r", entry_date, include_later_than)
+                    
                     continue
                 
             entries.append(cls.flatten(entry))
@@ -113,7 +116,6 @@ class SyndicationModularInput(ModularInput):
             
         return dictionary
             
-            
     def save_checkpoint(self, checkpoint_dir, stanza, last_run, last_entry_date):
         """
         Save the checkpoint state.
@@ -124,10 +126,13 @@ class SyndicationModularInput(ModularInput):
         last_run -- The time when the analysis was last performed
         last_entry_date -- The date of the last entry that was imported
         """
-                
-        self.save_checkpoint_data(checkpoint_dir, stanza, { 'last_run' : last_run,
-                                                            'last_entry_date' : time.mktime(last_entry_date)
-                                                           })
+        
+        if last_entry_date is not None:
+            self.save_checkpoint_data(checkpoint_dir, stanza, { 'last_run' : last_run,
+                                                                'last_entry_date' : time.mktime(last_entry_date)
+                                                               })
+        else:
+            self.save_checkpoint_data(checkpoint_dir, stanza, { 'last_run' : last_run })
         
     def run(self, stanza, cleaned_params, input_config):
         
@@ -145,7 +150,9 @@ class SyndicationModularInput(ModularInput):
             # Get the date of the latest entry imported
             try:
                 checkpoint_data = self.get_checkpoint_data(input_config.checkpoint_dir, stanza, throw_errors=True)
-            except:
+            except IOError:
+                checkpoint_data = None
+            except ValueError:
                 self.logger.exception("Exception generated when attempting to load the check-point data")
                 checkpoint_data = None
             
@@ -155,8 +162,8 @@ class SyndicationModularInput(ModularInput):
                 last_entry_date = None
             
             # Get the feed information
-            results, last_entry_date = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date)
-            self.logger.info("Got results, count=%i, url=%s", len(results), feed_url.geturl())
+            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger)
+            self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
             
             # Output the event
             for result in results:
@@ -169,6 +176,9 @@ class SyndicationModularInput(ModularInput):
                 last_ran = None
             
             # Save the checkpoint so that we remember when we last
+            if last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
+                last_entry_date = last_entry_date_retrieved
+            
             self.save_checkpoint(input_config.checkpoint_dir, stanza,  self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
             
 if __name__ == '__main__':
