@@ -14,7 +14,9 @@ from syndication import SyndicationModularInput
 class TestSyndicationImport(unittest.TestCase):
     
     def test_import_rss(self):
-        results = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet")
+        #results = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet")
+        results = SyndicationModularInput.get_feed("http://answers.splunk.com/feed/questions.rss")
+        
         #print results[0]
         self.assertGreaterEqual(len(results), 10)
         
