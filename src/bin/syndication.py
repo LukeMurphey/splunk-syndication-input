@@ -1,7 +1,9 @@
 import sys
 import time
+import re
+import urllib2
 
-from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField
+from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field
 from syndication_app import feedparser
 
 class SyndicationModularInput(ModularInput):
@@ -20,6 +22,8 @@ class SyndicationModularInput(ModularInput):
         args = [
                 URLField("url", "Feed URL", "The URL of the feed to input", empty_allowed=False),
                 BooleanField("include_only_changed", "Include only new or changed entries", "Only include entries that has not been indexed yet (won't get items that were already observed)", empty_allowed=False),
+                Field("username", "Username", "The username to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
+                Field("password", "Password", "The password to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False)
                 ]
         
@@ -36,10 +40,64 @@ class SyndicationModularInput(ModularInput):
         
         return None
         
+    @classmethod
+    def get_realm_and_auth_type(cls, feed_url, username, password):
+        
+        # Perform request and get the realm and whether or not the view uses HTTP digest or basic authentication
+        d = feedparser.parse(feed_url)
+        
+        # If the status isn't 401, then authentication isn't required
+        if d.status != 401:
+            return None, None
+        
+        auth_header = d.headers['www-authenticate']
+        
+        # Get the realm and whether it is using basic or digest authentication
+        http_auth_re = re.compile("((Digest)|(Basic))( realm=[\"]?([^\"]*)[\"]?)?")
+        match = http_auth_re.search(auth_header)
+        
+        auth_type = match.groups()[0]
+        auth_realm = match.groups()[4]
+        
+        return auth_realm, auth_type
         
     @classmethod
-    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None):
-        d = feedparser.parse(feed_url)
+    def get_auth_handler(cls, feed_url, username, password):
+        
+        realm, auth_type = cls.get_realm_and_auth_type(feed_url, username, password)
+        
+        # Make the associated auth handler
+        if auth_type == None:
+            return None
+        elif auth_type.lower() == "basic":
+            auth_handler = urllib2.HTTPBasicAuthHandler()
+        else:
+            auth_handler = urllib2.HTTPDigestAuthHandler()
+        
+        # Set the password
+        auth_handler.add_password(realm=realm,
+                                        uri=feed_url,
+                                        user=username,
+                                        passwd=password)
+
+        return auth_handler
+        
+    @classmethod
+    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None, username=None, password=None):
+        
+        auth_handler = None
+        
+        # Get an authentication handler if needed
+        if username is not None and password is not None:
+            auth_handler = cls.get_auth_handler(feed_url, username, password)
+            
+        # Parse the feed
+        if auth_handler is not None:
+            opener = urllib2.build_opener(auth_handler) 
+            feed = opener.open(feed_url)
+            d = feedparser.parse(feed)
+        else:
+            d = feedparser.parse(feed_url)
         
         entries = []
         latest_date = None

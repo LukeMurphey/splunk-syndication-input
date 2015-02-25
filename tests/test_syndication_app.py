@@ -6,25 +6,73 @@ import time
 from datetime import datetime, timedelta
 import re
 import splunk.auth
+import threading
+import urllib2
+
+from test_web_server import get_server
 
 sys.path.append( os.path.join("..", "src", "bin") )
 
 from syndication import SyndicationModularInput
+from syndication_app import feedparser
 
-class TestSyndicationImport(unittest.TestCase):
+class SyndicationAppTestCase(unittest.TestCase):
     
-    def test_import_rss(self):
-        #results = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet")
+    @classmethod
+    def setUpClass(cls):
+        
+        attempts = 0
+        cls.httpd = None
+        
+        sys.stdout.write("Waiting for web-server to start ...")
+        sys.stdout.flush()
+        
+        while cls.httpd is None and attempts < 20:
+            try:
+                cls.httpd = get_server(8888)
+                
+                print " Done"
+            except IOError:
+                cls.httpd = None
+                time.sleep(2)
+                attempts = attempts + 1
+                sys.stdout.write(".")
+                sys.stdout.flush()
+        
+        def start_server(httpd):
+            httpd.serve_forever()
+        
+        t = threading.Thread(target=start_server, args = (cls.httpd,))
+        t.daemon = True
+        t.start()
+        
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+
+class TestSyndicationImport(SyndicationAppTestCase):
+    
+    def test_import_rss_public(self):
         results = SyndicationModularInput.get_feed("http://answers.splunk.com/feed/questions.rss")
         
-        #print results[0]
         self.assertGreaterEqual(len(results), 10)
         
-    def test_import_atom(self):
+    def test_import_atom_public(self):
         
         results = SyndicationModularInput.get_feed("http://currentworldnews.blogspot.com/atom.xml")
         
         self.assertGreaterEqual(len(results), 10)
+        
+    def test_import_rss(self):
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_example.xml")
+        
+        self.assertGreaterEqual(len(results), 2)
+        
+    def test_import_atom(self):
+        
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/atom_example.xml")
+        
+        self.assertGreaterEqual(len(results), 1)
         
     def test_import_return_latest_date(self):
         results, latest_date = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet", return_latest_date=True)
@@ -132,6 +180,26 @@ class TestSyndicationImport(unittest.TestCase):
         d = SyndicationModularInput.flatten(dict)
         
         self.assertEquals(d['time'], '2015-02-09T00:00:00Z')
+    
+    def test_get_auth_handler(self):
+        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertIsInstance(auth_handler, urllib2.HTTPBasicAuthHandler)
+        
+    def test_get_auth_handler_none(self):
+        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEquals(auth_handler, None)
+    
+    def test_basic_auth_rss(self):
+        
+        username = 'admin'
+        password = 'changeme'    
+        
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")
+        
+        self.assertGreaterEqual(len(results), 2)
+        
     
 if __name__ == "__main__":
     loader = unittest.TestLoader()
