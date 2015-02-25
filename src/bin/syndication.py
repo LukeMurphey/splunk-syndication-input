@@ -199,6 +199,8 @@ class SyndicationModularInput(ModularInput):
         feed_url             = cleaned_params["url"]
         include_only_changed = cleaned_params.get("include_only_changed", True)
         sourcetype           = cleaned_params.get("sourcetype", "syndication")
+        username             = cleaned_params.get("username", None)
+        password             = cleaned_params.get("password", None)
         host                 = cleaned_params.get("host", None)
         index                = cleaned_params.get("index", "default")
         source               = stanza
@@ -220,7 +222,7 @@ class SyndicationModularInput(ModularInput):
                 last_entry_date = None
             
             # Get the feed information
-            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger)
+            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password)
             self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
             
             # Output the event
