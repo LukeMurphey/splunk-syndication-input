@@ -33,11 +33,14 @@ class SyndicationModularInput(ModularInput):
     def get_updated_date(cls, entry):
         
         if 'updated_parsed' in entry:
+            #cls.logger.debug("Using date updated_parsed=%s", entry.updated_parsed)
             return entry.updated_parsed
          
         if 'published_parsed' in entry:
+            #cls.logger.debug("Using date published_parsed=%s", entry.published_parsed)
             return entry.published_parsed
         
+        #cls.logger.debug("No date found")
         return None
         
     @classmethod
@@ -118,10 +121,16 @@ class SyndicationModularInput(ModularInput):
                 if include_later_than is not None and entry_date <= include_later_than:
                     
                     if logger is not None:
-                        logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r", entry_date, include_later_than)
+                        logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
                     
                     continue
                 
+                elif logger is not None and include_later_than is not None:
+                    logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
+                
+                elif logger is not None and include_later_than is None:
+                    logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), "none", entry.title)
+                      
             entries.append(cls.flatten(entry))
         
         # Return the latest date if requested
