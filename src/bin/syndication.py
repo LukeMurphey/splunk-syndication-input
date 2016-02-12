@@ -227,6 +227,7 @@ class SyndicationModularInput(ModularInput):
             
             if include_only_changed and checkpoint_data is not None and 'last_entry_date' in checkpoint_data:
                 last_entry_date = time.localtime(checkpoint_data['last_entry_date'])
+                self.logger.debug("Loaded latest entry date from checkpoint, last_entry_date=%s", last_entry_date)
             else:
                 last_entry_date = None
             
@@ -236,6 +237,7 @@ class SyndicationModularInput(ModularInput):
             
             # Output the event
             for result in results:
+                #self.logger.debug("Generating event, count=%i, url=%s", len(results), feed_url.geturl())
                 self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
                 
             # Get the time that the input last ran
@@ -243,6 +245,10 @@ class SyndicationModularInput(ModularInput):
                 last_ran = checkpoint_data['last_ran']
             else:
                 last_ran = None
+            
+            # Show a warning if no results were loaded but the last entry date is being updated (that shouldn't happen)
+            if len(results) == 0 and last_entry_date_retrieved > last_entry_date:
+                self.logger.warn("Latest entry date changed even though no entries were loaded, last_entry_date=$s, last_entry_date_retrieved=%s", last_entry_date, last_entry_date_retrieved)
             
             # Save the checkpoint so that we remember when we last
             if last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
