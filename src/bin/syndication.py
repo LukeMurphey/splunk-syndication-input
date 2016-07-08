@@ -57,6 +57,10 @@ class SyndicationModularInput(ModularInput):
         if d.status != 401:
             return None, None
         
+        # Make sure that an auth header exists
+        if 'www-authenticate' not in d.headers:
+            return None, None
+         
         auth_header = d.headers['www-authenticate']
         
         # Get the realm and whether it is using basic or digest authentication
