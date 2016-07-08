@@ -49,6 +49,10 @@ class SyndicationModularInput(ModularInput):
         # Perform request and get the realm and whether or not the view uses HTTP digest or basic authentication
         d = feedparser.parse(feed_url)
         
+        # Make sure we got a result
+        if d is None or not hasattr(d, 'status'):
+            return None, None
+        
         # If the status isn't 401, then authentication isn't required
         if d.status != 401:
             return None, None
@@ -105,33 +109,37 @@ class SyndicationModularInput(ModularInput):
         entries = []
         latest_date = None
         
-        for entry in d.entries:
-            
-            # Get the updated or published date
-            entry_date = cls.get_updated_date(entry)
-            
-            # Perform the operations that are based on the date
-            if entry_date is not None:
+        # Stop if we didn't get a result
+        if d is None or not hasattr(d, 'entries'):
+            logger.warn("No entries returned from the feed, url=\"%s\"", feed_url)
+        else:
+            for entry in d.entries:
                 
-                # If this is the latest one, then save it
-                if latest_date is None or entry_date > latest_date:
-                    latest_date = entry_date
-                    
-                # If the item is earlier than the date we are to include, then skip it
-                if include_later_than is not None and entry_date <= include_later_than:
-                    
-                    if logger is not None:
-                        logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
-                    
-                    continue
+                # Get the updated or published date
+                entry_date = cls.get_updated_date(entry)
                 
-                elif logger is not None and include_later_than is not None:
-                    logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
-                
-                elif logger is not None and include_later_than is None:
-                    logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), "none", entry.title)
-                      
-            entries.append(cls.flatten(entry))
+                # Perform the operations that are based on the date
+                if entry_date is not None:
+                    
+                    # If this is the latest one, then save it
+                    if latest_date is None or entry_date > latest_date:
+                        latest_date = entry_date
+                        
+                    # If the item is earlier than the date we are to include, then skip it
+                    if include_later_than is not None and entry_date <= include_later_than:
+                        
+                        if logger is not None:
+                            logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
+                        
+                        continue
+                    
+                    elif logger is not None and include_later_than is not None:
+                        logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
+                    
+                    elif logger is not None and include_later_than is None:
+                        logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), "none", entry.title)
+                          
+                entries.append(cls.flatten(entry))
         
         # Return the latest date if requested
         if return_latest_date:
