@@ -4,51 +4,19 @@ import sys
 import os
 import time
 from datetime import datetime, timedelta
-import re
-import splunk.auth
-import threading
 import urllib2
-
-from test_web_server import get_server
 
 sys.path.append( os.path.join("..", "src", "bin") )
 
 from syndication import SyndicationModularInput
 from syndication_app import feedparser
+from unit_test_web_server import UnitTestWithWebServer
 
-class SyndicationAppTestCase(unittest.TestCase):
+class SyndicationAppTestCase(UnitTestWithWebServer):
     
     @classmethod
-    def setUpClass(cls):
-        
-        attempts = 0
-        cls.httpd = None
-        
-        sys.stdout.write("Waiting for web-server to start ...")
-        sys.stdout.flush()
-        
-        while cls.httpd is None and attempts < 20:
-            try:
-                cls.httpd = get_server(8888)
-                
-                print " Done"
-            except IOError:
-                cls.httpd = None
-                time.sleep(2)
-                attempts = attempts + 1
-                sys.stdout.write(".")
-                sys.stdout.flush()
-        
-        def start_server(httpd):
-            httpd.serve_forever()
-        
-        t = threading.Thread(target=start_server, args = (cls.httpd,))
-        t.daemon = True
-        t.start()
-        
-    @classmethod
     def tearDownClass(cls):
-        cls.httpd.shutdown()
+        UnitTestWithWebServer.shutdownServer()
 
 class TestSyndicationImport(SyndicationAppTestCase):
     
