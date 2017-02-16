@@ -10,7 +10,7 @@ This app provides a mechanism for importing syndication feeds into Splunk (RSS, 
 Configuring Splunk
 ================================================
 
-This app exposes a new input type that can be configured in the Splunk Manager. To configure it, create a new input in the Manager under Data inputs � Syndication.
+This app exposes a new input type that can be configured in the Splunk Manager. To configure it, create a new input in the Manager under Data inputs » Syndication.
 
 
 
@@ -42,4 +42,6 @@ Change History
 | 1.0.1   | Fixed issue where the source type cannot be selected correctly                                                   |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.0.2   | Hardened the input to recover from feeds that don't have an www-authenticate header and those with no entries    |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.0.3   | Improved handling of time fields by adding updated_epoch and published_epoch fields                              |
 +---------+------------------------------------------------------------------------------------------------------------------+
