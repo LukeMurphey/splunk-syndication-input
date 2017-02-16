@@ -237,6 +237,7 @@ class SyndicationModularInput(ModularInput):
                 self.logger.exception("Exception generated when attempting to load the check-point data")
                 checkpoint_data = None
             
+            # Try to load the last entry date from the checkpoint data
             if include_only_changed and checkpoint_data is not None and 'last_entry_date' in checkpoint_data:
                 last_entry_date = time.localtime(checkpoint_data['last_entry_date'])
                 self.logger.debug("Loaded latest entry date from checkpoint, last_entry_date=%s", last_entry_date)
