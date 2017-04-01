@@ -44,4 +44,6 @@ Change History
 | 1.0.2   | Hardened the input to recover from feeds that don't have an www-authenticate header and those with no entries    |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.0.3   | Improved handling of time fields by adding updated_epoch and published_epoch fields                              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.1     | Added search command for retrieving syndication feeds from SPL (called "feedstail")                              |
 +---------+------------------------------------------------------------------------------------------------------------------+
