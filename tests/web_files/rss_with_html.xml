@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/css/rss.css" type="text/css"?>
+<rss version="2.0" 
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+>
+<channel>
+<atom:link href="https://isc.sans.edu/rssfeed_full.xml" rel="self" type="application/rss+xml" />
+<title>SANS Internet Storm Center, InfoCON: green</title>
+<atom:link href="https://isc.sans.edu/rssfeed_full.xml" rel="self" type="application/rss+xml" /><link>https://isc.sans.edu</link><description><![CDATA[SANS Internet Storm Center - Cooperative Cyber Security Monitor]]></description><language>   en-us</language><lastBuildDate>   Wed, 30 Aug 2017 06:10:05 +0000</lastBuildDate><pubDate>Wed, 30 Aug 2017 00:25:03 GMT</pubDate><copyright>(C) SANS Institute 2017</copyright>
+             <generator>isc rss feed maker</generator>
+             <ttl>30</ttl>
+             <webMaster>handlers@sans.org (ISC Handlers)</webMaster>
+             <image>
+               <title>SANS Internet Storm Center, InfoCON: green</title>
+               <url>https://isc.sans.edu/images/status.gif</url>
+               <link>https://isc.sans.edu</link>
+             </image>
+  <item>
+    <title><![CDATA[Infocon: green]]></title>
+    <link>https://isc.sans.edu/diary.html?rss</link>    <guid>https://isc.sans.edu/diary.html?rss</guid><description><![CDATA[ISC Stormcast For Wednesday, August 30th 2017 https://isc.sans.edu/podcastdetail.html&#x3f;id=5648]]></description>  </item>  <item>
+    <title><![CDATA[ISC Stormcast For Wednesday, August 30th 2017 https://isc.sans.edu/podcastdetail.html&#x3f;id=5648, (Wed, Aug 30th)]]></title>
+    <link>https://isc.sans.edu/diary/rss/22768</link>    <guid>https://isc.sans.edu/diary/rss/22768</guid><description><![CDATA[  (c) SANS Internet Storm Center. https://isc.sans.edu Creative Commons Attribution-Noncommercial 3.0 United States License.]]></description><content:encoded><![CDATA[
+ 
+ (c) SANS Internet Storm Center. https://isc.sans.edu Creative Commons Attribution-Noncommercial 3.0 United States License.]]></content:encoded>    <pubDate>Wed, 30 Aug 2017 00:25:03 GMT</pubDate>  </item>  <item>
+    <title><![CDATA[Second Google Chrome Extension Banker Malware in Two Weeks, (Tue, Aug 29th)]]></title>
+    <link>https://isc.sans.edu/diary/rss/22766</link>    <guid>https://isc.sans.edu/diary/rss/22766</guid><description><![CDATA[ <ol>&#xd; &#x9;<li style="text-align:justify"><strong>Introduction</strong></li>&#xd; </ol>&#xd;]]></description><content:encoded><![CDATA[<ol>
+	<li style="text-align:justify"><strong>Introduction</strong></li>
+</ol>
+
+<p style="text-align:justify">It seems that Google Chrome extensions have become quite the tool for banking malware fraudsters. Two weeks ago, an offender phoned a victim and asked him to install a supposedly new bank security module that, instead, was a malicious extension hosted at the Google Chrome app store aimed to steal victim&rsquo;s banking credentials [1]. This week I received a report about a targeted email phishing campaign against another company with a suspicious attachment. The attachments, after the analysis detailed in today&rsquo;s diary, revealed itself to be another Google Chrome extension prepared to steal banking credentials, credit card, CVV numbers and fraud &ldquo;compensation tickets&rdquo; (a popular and particular Brazilian payment method; we call it &ldquo;boleto&rdquo;) to divert payments.</p>
+
+<p>To increase the success rate and entice the victim&rsquo;s attention to the message, scammers used a previously hijacked company email account to threaten employees with a fake layoff list attached to the message in a &ldquo;zip&rdquo; file that contained the first part of the malware. I named it <strong>IDKEY</strong> due to the name of the extension it deploys.</p>
+
+<ol start="2">
+	<li style="text-align:justify"><strong>Threat Analysis</strong></li>
+</ol>
+
+<p style="text-align:justify">After analyzing many different malware parts and lots of obfuscated code, it was possible to understand the threat&rsquo;s flow, since the phishing e-mail to the malicious actions, as seen in Figure 1. A textual description can be seen below:</p>
+
+<ul>
+	<li style="text-align:justify">The e-mail attachment &ldquo;zip&rdquo; file contains a &ldquo;.vbs&rdquo; obfuscated script that, once executed, collects system information and send to a C&amp;C server;</li>
+	<li style="text-align:justify">Based on the received information, the C&amp;C server decides whether the victim machine is a virtual machine (VM). If so, returns an URL to a non-malicious JPEG file. Otherwise, returns an URL to the second part of the malware;</li>
+	<li style="text-align:justify">The second file, supposedly another &ldquo;zip&rdquo;, is, in fact, an obfuscated VBE script, that is downloaded and executed;</li>
+	<li style="text-align:justify">The VBE script makes additional system checks and downloads a &ldquo;zip&rdquo; file (a real one this time) which contains a &ldquo;Chrome&rdquo; directory and a DLL;</li>
+	<li style="text-align:justify">The DLL is deployed and configured to load during user login;</li>
+	<li style="text-align:justify">The Google Chrome Extension is programmatically loaded into Google Chrome using the parameter &ldquo;--load-extension&rdquo;;</li>
+	<li style="text-align:justify">The malicious extensions, called IDKEY STOR (very suggestive name in English) starts to monitor all visited websites to identify sensitive information. When it matches specific strings, the fraud begins;</li>
+	<li style="text-align:justify">Credentials and credit card numbers are snatched and sent to the C&amp;C server;</li>
+	<li style="text-align:justify">When the victim generates a compensation ticket (the &ldquo;boleto&rdquo; we talked earlier) which has a barcode, the malware intercepts the page loading, communicates with C&amp;C and asks for a fraudulent barcode number. It then communicates with an open API on another financial institution in Brazil and has it generate a barcode image and overwrites the original one. As result, the payment will be diverted to an account chosen by fraudsters.</li>
+</ul>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig1.png" style="height:1166px; width:800px" /></p>
+
+<p style="text-align:center">Figure 1 &ndash; IDKEY Malware Analysis</p>
+
+<ol start="3">
+	<li><strong>Sandbox detection</strong></li>
+</ol>
+
+<p style="margin-left:18.0pt">One of the first malware actions done by the VBS attached to the phishing e-mail is collecting a bunch of machine information and sending it to the C&amp;C server, as shown in Figures 2 and 3.</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig2.png" style="height:119px; width:602px" /></p>
+
+<p style="text-align:center">Figure 2 &ndash; Machine information collection</p>
+
+<p>&nbsp;</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig3.png" style="height:318px; width:600px" /></p>
+
+<p style="text-align:center">Figure 3 &ndash; Machine information being posted to the C&amp;C server</p>
+
+<p><span style="font-size:12.0pt"><span style="font-family:Calibri">The result for this HTTP Post request was the URL &ldquo;hxxp://cdn.ahnegao.com.br/2017/07/casa.jpg&rdquo; which points to a regular JPEG file &ndash; a clear strategy to mislead sandboxes. To bypass this control, it was enough to replace &ldquo;VMWare&rdquo; terms in the request to something else, as shown in Figure 4. This time, C&amp;C returned us a URL to the next piece of malware. </span></span></p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig4.png" style="height:280px; width:600px" /></p>
+
+<p style="text-align:center">Figure 4 &ndash; Bypassing sandbox detection</p>
+
+<ol start="4">
+	<li><strong>JavaScript [de]obfuscation</strong></li>
+</ol>
+
+<p>Another part of the malware that caught my attention was how the Google Chrome Extension JavaScript code was obfuscated. It uses an array of strings in hexadecimal followed by a function that reorders the array. The array is then used all over the code, as seen in Figure 5. I saw this approach other times, but now I had to decode the source before advancing. It was not possible to read it otherwise.</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig5.png" style="height:258px; width:600px" /></p>
+
+<p style="text-align:center">Figure 5 &ndash; Malicious Google Extension snippet</p>
+
+<p>Using the &ldquo;nicefier&rdquo; service JSNice [2], it was possible to better understand the source, as seen in Figure 6.</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig6.png" style="height:237px; width:601px" /></p>
+
+<p style="text-align:center">Figure 6 &ndash; After JSNice deobfuscation</p>
+
+<p>Alas, reading the code is still far from easy because of the array reference approach used. To overcome this, it was necessary to create a &ldquo;decode&rdquo; function to map and replace all &lsquo;array[&ldquo;position&rdquo;]&rsquo; references (like <strong>&lsquo;_0xb33d[&ldquo;0x0&rdquo;]</strong>&rsquo;), to their respective array position, as seen in Figure 7.</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig7.png" style="height:453px; width:600px" /></p>
+
+<p style="text-align:center">Figure 7 &ndash; JavaScript decoder</p>
+
+<p>Loading this code, we had the decoded JavaScript printed to the console, as seen in Figure 8; it was finally possible to understand the malicious intentions prepared and described in this article.</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig8.png" style="height:547px; width:600px" /></p>
+
+<p style="text-align:center">Figure 8 &ndash; Source decoded</p>
+
+<ol start="5">
+	<li><strong>Final words</strong></li>
+</ol>
+
+<p>While it is extremely necessary for developers, the option of manually loading Google Chrome extensions may pose a risk to the regular user who should be aware of browser warnings about extensions in developer mode, as in Figure 9. And again [1], in my opinion, Chrome should restrict extensions access to sensitive form fields, like passwords, unless it is explicitly consented by the user.</p>
+
+<p>Should Google Chrome team be more explicit about the dangers posed by programmatically loaded extensions in their warning?</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig9.png" style="height:269px; width:524px" /></p>
+
+<p style="text-align:center">Figure 9 &ndash; Google Chrome Extension in developer mode warning</p>
+
+<p style="text-align:center">&nbsp;</p>
+
+<ol start="6">
+	<li><strong>IOCs</strong></li>
+</ol>
+
+<p>&nbsp;</p>
+
+<p><strong>Files</strong></p>
+
+<p><span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">Malicious Google Chrome Extension Files</span></span></span></span></p>
+
+<p><span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (1.js) = 1d91e021e5989029ff0ad6dd595c7eb1</span></span></span></span><br />
+<span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (2.js) = d996bdc411c936ac5581386506e79ff4</span></span></span></span><br />
+<span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (3.js) = 59352276c38d85835b61e933da8de17b</span></span></span></span><br />
+<span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (manifest.json) = c6157953f44bba6907f4827a1b3b4d0a</span></span></span></span></p>
+
+<p>Other files</p>
+
+<p><span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (myinside.dll) = 574322a51aee572f60f2d87722d75056</span></span></span></span><br />
+<span style="background-color:white"><span style="font-size:8.5pt"><span style="font-family:Menlo"><span style="color:black">MD5 (uia.zip) = bae703565b4274ca507e81d3b623c808</span></span></span></span></p>
+
+<p><strong>Network</strong></p>
+
+<p>hxxp://cdn.ahnegao.com.br/2017/07/casa.jpg?1491404962<br />
+hxxp://storage.googleapis.com/fogoreal/uia.zip&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br />
+hxxp://storate.googleapis.com/fogoreal/top019.zip&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br />
+hxxps://tofindanotherrace.com/<br />
+hxxp://insidevx.net/log5.php?logins=did&amp;s=ch<br />
+hxxp://insidevx.net/log5.php?logins=did&amp;s=b</p>
+
+<p><strong>File System </strong></p>
+
+<p>%userprofile%\appdata\roaming\microsoft\windows\start menu\programs\startup\&lt;randomname&gt;.vbs<br />
+%userprofile%\myinside.dll<br />
+%userprofile%\ext\[Chrome|1.9.6]</p>
+
+<p><strong>Google Chrome</strong></p>
+
+<p>IDKEY STOR malicious extension deployed</p>
+
+<p style="text-align:center"><img alt="" src="https://isc.sans.edu/diaryimages/images/IDKEY-Fig10.png" style="height:110px; width:600px" /></p>
+
+<ol start="7">
+	<li><strong>References</strong></li>
+</ol>
+
+<p>[1] <a href="https://isc.sans.edu/forums/diary/BankerGoogleChromeExtensiontargetingBrazil/22722/">https://isc.sans.edu/forums/diary/BankerGoogleChromeExtensiontargetingBrazil/22722/</a><br />
+[2] <a href="http://jsnice.org/">http://jsnice.org/</a></p>
+
+<p>--<br />
+Renato Marinho<br />
+<a href="http://morphuslabs.com">Morphus Labs</a>| <a href="http://ow.ly/Nst730dJ6X3">LinkedIn</a>|<a href="http://ow.ly/uXqT30dJ6Tp">Twitter</a></p>
+
+ 
+ (c) SANS Internet Storm Center. https://isc.sans.edu Creative Commons Attribution-Noncommercial 3.0 United States License.]]></content:encoded>    <pubDate>Tue, 29 Aug 2017 14:25:45 GMT</pubDate>  </item>
+</channel>
+</rss>

@@ -87,6 +87,31 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertEquals(len(d), 2)
         self.assertEquals(d['list.one'], 'uno')
         
+    def test_flatten_dict_sort(self):
+
+        dict = {
+                'list': {
+                         '3' : 'tres',
+                         '1' : 'uno',
+                         '2' : 'dos',
+                         '5' : 'cinco',
+                         '4' : 'cuatro',
+                         '6' : 'seis'
+                         }
+                }
+        
+        d = SyndicationModularInput.flatten(dict, sort=True)
+        
+        self.assertEquals(len(d), 6)
+
+        keys = d.keys()
+        self.assertEquals(keys[0], 'list.1')
+        self.assertEquals(keys[1], 'list.2')
+        self.assertEquals(keys[2], 'list.3')
+        self.assertEquals(keys[3], 'list.4')
+        self.assertEquals(keys[4], 'list.5')
+        self.assertEquals(keys[5], 'list.6')
+
     def test_flatten_list(self):
         
         dict = {
@@ -166,12 +191,14 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")
         
-        self.assertGreaterEqual(len(results), 2)
+        self.assertEqual(len(results), 2)
+
+    def test_cleanup_html_rss(self):  
         
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_with_html.xml", clean_html=True)
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[2]['content.0.value'][:120], "  1. **Introduction**\n\nIt seems that Google Chrome extensions have become quite the tool for banking\nmalware fraudsters.")
     
 if __name__ == "__main__":
-    loader = unittest.TestLoader()
-    suites = []
-    suites.append(loader.loadTestsFromTestCase(TestSyndicationImport))
-    
-    unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
+    unittest.main(exit=True)

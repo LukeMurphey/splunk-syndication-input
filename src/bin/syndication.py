@@ -7,10 +7,12 @@ import sys
 import time
 import re
 import urllib2
+from collections import OrderedDict
 
 from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field
 from syndication_app.event_writer import StashNewWriter
 from syndication_app import feedparser
+import html2text
 
 class SyndicationModularInput(ModularInput):
     """
@@ -118,7 +120,7 @@ class SyndicationModularInput(ModularInput):
         return auth_handler
 
     @classmethod
-    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None, username=None, password=None):
+    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None, username=None, password=None, clean_html=True):
         """
         Get the feed results as a dictionary.
 
@@ -129,6 +131,7 @@ class SyndicationModularInput(ModularInput):
         logger -- The logger to log the data to
         username -- The username to use when authenticating
         password -- The password to use when authenticating
+        clean_html -- If true, HTML will be convrted to something human readable
         """
 
         auth_handler = None
@@ -178,7 +181,22 @@ class SyndicationModularInput(ModularInput):
                     elif logger is not None and include_later_than is None:
                         logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), "none", entry.title)
 
-                entries.append(cls.flatten(entry))
+                # Clean up the HTML if requested
+                if clean_html:
+                    
+                    # Clean up the content
+                    if entry.get('content', None) and entry['content'][0].get('type', 'text/html') == 'text/html' and entry['content'][0].get('value', None):
+                        entry['content'][0]['value'] = html2text.html2text(entry['content'][0]['value'])
+
+                    # Clean up the summary
+                    if entry.get('summary', None):
+                        entry['summary'] = html2text.html2text(entry['summary'])
+
+                    # Clean up the summary_detail
+                    if entry.get('summary_detail', None) and entry['summary_detail'].get('type', 'text/html') == 'text/html' and entry['summary_detail'].get('value', None):
+                        entry['summary_detail']['value'] = html2text.html2text(entry['summary_detail']['value'])
+
+                entries.append(cls.flatten(entry, sort=True))
 
         # Return the latest date if requested
         if return_latest_date:
@@ -187,7 +205,7 @@ class SyndicationModularInput(ModularInput):
             return entries
 
     @classmethod
-    def flatten(cls, item, dictionary=None, name=None):
+    def flatten(cls, item, dictionary=None, name=None, sort=False):
         """
         Take a Python object and flatten it into a list.
 
@@ -195,6 +213,7 @@ class SyndicationModularInput(ModularInput):
         item -- The Python item to flatten
         dictionary -- The dictionary to populate if you want to start with an existing dictionary
         name -- The name that should be used for appended to the name of the items created
+        sort -- If true, the dictionary will be sorted
         """
 
         if dictionary is None:
@@ -235,6 +254,10 @@ class SyndicationModularInput(ModularInput):
         # Handle string values
         else:
             dictionary[name] = str(item)
+
+        # Sort the dictionary
+        if sort:
+            dictionary = OrderedDict(sorted(dictionary.items(), key=lambda x: x[0]))
 
         return dictionary
 
