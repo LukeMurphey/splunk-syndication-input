@@ -9,12 +9,15 @@ import re
 import urllib2
 
 from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field
+from syndication_app.event_writer import StashNewWriter
 from syndication_app import feedparser
 
 class SyndicationModularInput(ModularInput):
     """
     The syndication input facilitates import of feeds into Splunk.
     """
+
+    OUTPUT_USING_STASH = True
 
     def __init__(self):
 
@@ -290,8 +293,16 @@ class SyndicationModularInput(ModularInput):
 
             # Output the event
             for result in results:
-                #self.logger.debug("Generating event, count=%i, url=%s", len(results), feed_url.geturl())
-                self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
+                # Send the event
+                if self.OUTPUT_USING_STASH:
+
+                    # Write the event as a stash new file
+                    writer = StashNewWriter(index=index, source_name=source, file_extension=".stash_syndication_input", sourcetype=sourcetype, host=host)
+                    self.logger.debug("Wrote stash file=%s", writer.write_event(result))
+
+                else:
+                    #self.logger.debug("Generating event, count=%i, url=%s", len(results), feed_url.geturl())
+                    self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
 
             # Get the time that the input last ran
             if checkpoint_data is not None and 'last_ran' in checkpoint_data:
