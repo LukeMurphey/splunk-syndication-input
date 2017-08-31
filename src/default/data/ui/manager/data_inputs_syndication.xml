@@ -35,7 +35,13 @@
 	          <view name="create"/>
 	          <key name="exampleText">If enabled, only new or updated entries will be included</key>
 	        </element>
-	        
+
+	        <element name="clean_html" type="checkbox" label="Convert HTML to Text">
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">If enabled, HTML within the entries will be converted to human readable text</key>
+	        </element>
+
 	      </elements>
 	  	</element>
 	  	

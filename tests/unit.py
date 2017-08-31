@@ -88,7 +88,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertEquals(d['list.one'], 'uno')
         
     def test_flatten_dict_sort(self):
-
+        # https://lukemurphey.net/issues/2039
         dict = {
                 'list': {
                          '3' : 'tres',
@@ -194,7 +194,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertEqual(len(results), 2)
 
     def test_cleanup_html_rss(self):  
-        
+        # https://lukemurphey.net/issues/2038
         results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_with_html.xml", clean_html=True)
 
         self.assertEqual(len(results), 3)

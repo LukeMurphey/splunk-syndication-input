@@ -34,7 +34,8 @@ class SyndicationModularInput(ModularInput):
                 BooleanField("include_only_changed", "Include only new or changed entries", "Only include entries that has not been indexed yet (won't get items that were already observed)", empty_allowed=False),
                 Field("username", "Username", "The username to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 Field("password", "Password", "The password to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
-                DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False)
+                DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False),
+                BooleanField("clean_html", "Convert HTML to Text", "Convert HTML to human readable text", empty_allowed=False)
                 ]
 
         ModularInput.__init__( self, scheme_args, args, logger_name='syndication_modular_input' )
@@ -290,6 +291,7 @@ class SyndicationModularInput(ModularInput):
         password = cleaned_params.get("password", None)
         host = cleaned_params.get("host", None)
         index = cleaned_params.get("index", "default")
+        clean_html = cleaned_params.get("clean_html", False)
         source = stanza
 
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
@@ -311,7 +313,7 @@ class SyndicationModularInput(ModularInput):
                 last_entry_date = None
 
             # Get the feed information
-            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password)
+            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password, clean_html=clean_html)
             self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
 
             # Output the event

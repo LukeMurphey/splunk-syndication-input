@@ -16,3 +16,6 @@ username = <value>
 
 password = <value>
 * Defines the password to use for authenticating (only HTTP authentication supported)
+
+clean_html = <value>
+* Indicates if the HTML content in the output to human readable text
