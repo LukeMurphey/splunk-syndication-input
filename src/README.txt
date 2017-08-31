@@ -57,4 +57,8 @@ Change History
 | 1.0.3   | Improved handling of time fields by adding updated_epoch and published_epoch fields                              |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.1     | Added search command for retrieving syndication feeds from SPL (called "feedstail")                              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.2     | Licensed has been changed to the GNU GPL due to the inclusion of html2text                                       |
+|         | Adding ability to convert HTML to readable text (Markdown)                                                       |
+|         | Fixed issue where the output could break incorrectly when the content contains HTML                              |
 +---------+------------------------------------------------------------------------------------------------------------------+
