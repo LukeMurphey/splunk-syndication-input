@@ -184,7 +184,7 @@ class SyndicationModularInput(ModularInput):
 
                 # Clean up the HTML if requested
                 if clean_html:
-                    
+
                     # Clean up the content
                     try:
                         if entry.get('content', None) and entry['content'][0].get('type', 'text/html') == 'text/html' and entry['content'][0].get('value', None):
