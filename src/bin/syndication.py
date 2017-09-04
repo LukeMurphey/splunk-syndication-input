@@ -186,16 +186,25 @@ class SyndicationModularInput(ModularInput):
                 if clean_html:
                     
                     # Clean up the content
-                    if entry.get('content', None) and entry['content'][0].get('type', 'text/html') == 'text/html' and entry['content'][0].get('value', None):
-                        entry['content'][0]['value'] = html2text.html2text(entry['content'][0]['value'])
+                    try:
+                        if entry.get('content', None) and entry['content'][0].get('type', 'text/html') == 'text/html' and entry['content'][0].get('value', None):
+                            entry['content'][0]['value'] = html2text.html2text(entry['content'][0]['value'])
+                    except:
+                        logger.warn("Unable to convert the HTML content, field=%s", "value")
 
                     # Clean up the summary
-                    if entry.get('summary', None):
-                        entry['summary'] = html2text.html2text(entry['summary'])
+                    try:
+                        if entry.get('summary', None):
+                            entry['summary'] = html2text.html2text(entry['summary'])
+                    except:
+                        logger.warn("Unable to convert the HTML content, field=%s", "summary")
 
                     # Clean up the summary_detail
-                    if entry.get('summary_detail', None) and entry['summary_detail'].get('type', 'text/html') == 'text/html' and entry['summary_detail'].get('value', None):
-                        entry['summary_detail']['value'] = html2text.html2text(entry['summary_detail']['value'])
+                    try:
+                        if entry.get('summary_detail', None) and entry['summary_detail'].get('type', 'text/html') == 'text/html' and entry['summary_detail'].get('value', None):
+                            entry['summary_detail']['value'] = html2text.html2text(entry['summary_detail']['value'])
+                    except:
+                        logger.warn("Unable to convert the HTML content, field=%s", "summary_detail")
 
                 entries.append(cls.flatten(entry, sort=True))
 
