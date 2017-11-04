@@ -2,9 +2,12 @@
 import unittest
 import sys
 import os
+import errno
 import time
 from datetime import datetime, timedelta
 import urllib2
+
+import HTMLTestRunner
 
 sys.path.append( os.path.join("..", "src", "bin") )
 
@@ -200,5 +203,18 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertEqual(len(results), 3)
         self.assertEqual(results[2]['content.0.value'][:120], "  1. **Introduction**\n\nIt seems that Google Chrome extensions have become quite the tool for banking\nmalware fraudsters.")
     
-if __name__ == "__main__":
-    unittest.main(exit=True)
+if __name__ == '__main__':
+    report_path = os.path.join('..', os.environ.get('TEST_OUTPUT', 'tmp/test_report.html'))
+
+    # Make the test directory
+    try:
+        os.makedirs(os.path.dirname(report_path))
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+    with open(report_path, 'w') as report_file:
+        test_runner = HTMLTestRunner.HTMLTestRunner(
+            stream=report_file
+        )
+        unittest.main(testRunner=test_runner)
