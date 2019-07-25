@@ -61,4 +61,6 @@ Change History
 | 1.2     | Licensed has been changed to the GNU GPL due to the inclusion of html2text                                       |
 |         | Adding ability to convert HTML to readable text (Markdown)                                                       |
 |         | Fixed issue where the output could break incorrectly when the content contains HTML                              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.2.1   | Fixed crash that occurred when an invalid HTTP header was received                                               |
 +---------+------------------------------------------------------------------------------------------------------------------+
