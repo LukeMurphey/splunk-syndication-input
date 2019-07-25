@@ -55,7 +55,7 @@ class SyndicationModularInput(ModularInput):
         return None
 
     @classmethod
-    def get_realm_and_auth_type(cls, feed_url, username, password):
+    def get_realm_and_auth_type(cls, feed_url, username, password, logger=None):
         """
         Get the realm and authentication type for the given feed.
 
@@ -63,6 +63,7 @@ class SyndicationModularInput(ModularInput):
         feed_url -- The URL of the feed to retrieve (as a string)
         username -- The username to use when authenticating
         password -- The password to use when authenticating
+        logger -- A logger to log failure to parse the header messages
         """
 
         # Perform request and get the realm and whether or not the view uses HTTP digest or basic authentication
@@ -83,16 +84,23 @@ class SyndicationModularInput(ModularInput):
         auth_header = d.headers['www-authenticate']
 
         # Get the realm and whether it is using basic or digest authentication
-        http_auth_re = re.compile("((Digest)|(Basic))( realm=[\"]?([^\"]*)[\"]?)?")
+        http_auth_re = re.compile("((Digest)|(Basic))( realm=[\"]?([^\"]*)[\"]?)?", re.IGNORECASE)
         match = http_auth_re.search(auth_header)
 
-        auth_type = match.groups()[0]
-        auth_realm = match.groups()[4]
+        # Stop if we couldn't parse the header
+        if match is None or len(match.groups()) < 5:
+            if logger is not None:
+                logger.warn("Unable to parse the HTTP authentication header, header=\"%s\"", auth_header)
+
+            return None, None
+        else:
+            auth_type = match.groups()[0]
+            auth_realm = match.groups()[4]
 
         return auth_realm, auth_type
 
     @classmethod
-    def get_auth_handler(cls, feed_url, username, password):
+    def get_auth_handler(cls, feed_url, username, password, logger=None):
         """
         Create a URL that will perform authentication for the given feed.
 
@@ -102,7 +110,7 @@ class SyndicationModularInput(ModularInput):
         password -- The password to use when authenticating
         """
 
-        realm, auth_type = cls.get_realm_and_auth_type(feed_url, username, password)
+        realm, auth_type = cls.get_realm_and_auth_type(feed_url, username, password, logger)
 
         # Make the associated auth handler
         if auth_type == None:
@@ -139,7 +147,7 @@ class SyndicationModularInput(ModularInput):
 
         # Get an authentication handler if needed
         if username is not None and password is not None:
-            auth_handler = cls.get_auth_handler(feed_url, username, password)
+            auth_handler = cls.get_auth_handler(feed_url, username, password, logger)
 
         # Parse the feed
         if auth_handler is not None:

@@ -15,13 +15,33 @@ class TestWebServerHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
+    def do_no_realm_AUTHHEAD(self):
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic')
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+    
+    def do_invalid_AUTHHEAD(self):
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'basi')
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
     def do_GET(self):
         
+        # Handle an invalid authentication request
+        if 'invalid_auth' in self.path:
+            self.do_invalid_AUTHHEAD()
+
+        # Handle an authentication request with no realm
+        elif 'no_realm_auth' in self.path:
+            self.do_no_realm_AUTHHEAD()
+
         # If a request without authentication required, then handle the file directly
-        if 'auth' not in self.path:
+        elif 'auth' not in self.path:
             with open( os.path.join("web_files", os.path.basename(self.path)), "r") as webfile:
                 self.wfile.write(webfile.read())
-        
+
         # Otherwise, handle an authentication request
         else:
             username = 'admin'
@@ -32,7 +52,6 @@ class TestWebServerHandler(BaseHTTPRequestHandler):
             if self.headers.getheader('Authorization') == None:
                 self.do_AUTHHEAD()
                 self.wfile.write('no auth header received')
-                pass
             elif self.headers.getheader('Authorization') == ('Basic ' + encoded_password):
                 self.do_HEAD()
                 #self.wfile.write(self.headers.getheader('Authorization'))

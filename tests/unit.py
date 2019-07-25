@@ -46,15 +46,15 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertGreaterEqual(len(results), 1)
         
     def test_import_return_latest_date(self):
-        results, latest_date = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet", return_latest_date=True)
+        results, latest_date = SyndicationModularInput.get_feed("http://127.0.0.1:8888/atom_example.xml", return_latest_date=True)
         
-        self.assertGreaterEqual(len(results), 10)
+        self.assertGreaterEqual(len(results), 0)
         
         self.assertIsNotNone(latest_date)
     
     def test_import_filter_by_date(self):
         # First get the date of the last item
-        results, latest_date = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet", return_latest_date=True)
+        results, latest_date = SyndicationModularInput.get_feed("http://127.0.0.1:8888/atom_example.xml", return_latest_date=True)
         
         # Back off the date by a second
         latest_datetime = datetime.fromtimestamp(time.mktime(latest_date))
@@ -63,7 +63,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
         latest_date_minus_second_struct = latest_date_minus_second.timetuple()
         
         # Try it and see if we get one result
-        results = SyndicationModularInput.get_feed("http://feeds.feedburner.com/456bereastreet", include_later_than=latest_date_minus_second_struct)
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/atom_example.xml", include_later_than=latest_date_minus_second_struct)
         
         self.assertGreaterEqual(len(results), 1)
         
@@ -186,6 +186,18 @@ class TestSyndicationImport(SyndicationAppTestCase):
         auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
         
         self.assertEquals(auth_handler, None)
+
+    def test_get_realm_and_auth_type(self):
+        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEquals(auth_realm, None)
+        self.assertEquals(auth_type, None)
+
+    def test_get_realm_and_auth_type_invalid(self):
+        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/invalid_auth/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEquals(auth_realm, None)
+        self.assertEquals(auth_type, None)
     
     def test_basic_auth_rss(self):
         
