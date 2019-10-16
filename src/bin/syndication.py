@@ -6,12 +6,21 @@ that Splunk can index it.
 import sys
 import time
 import re
-import urllib2
+import os
+try:
+    from urllib.request import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener
+except:
+    from urllib2 import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener
 from collections import OrderedDict
 
-from syndication_app.modular_input import ModularInput, URLField, DurationField, BooleanField, Field
+path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
+sys.path.insert(0, path_to_mod_input_lib)
+from modular_input import ModularInput, URLField, DurationField, BooleanField, Field
 from syndication_app.event_writer import StashNewWriter
-from syndication_app import feedparser
+
+path_to_app_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'syndication_app')
+sys.path.insert(0, path_to_app_lib)
+import feedparser
 import html2text
 
 class SyndicationModularInput(ModularInput):
@@ -116,9 +125,9 @@ class SyndicationModularInput(ModularInput):
         if auth_type == None:
             return None
         elif auth_type.lower() == "basic":
-            auth_handler = urllib2.HTTPBasicAuthHandler()
+            auth_handler = HTTPBasicAuthHandler()
         else:
-            auth_handler = urllib2.HTTPDigestAuthHandler()
+            auth_handler = HTTPDigestAuthHandler()
 
         # Set the password
         auth_handler.add_password(realm=realm,
@@ -151,7 +160,7 @@ class SyndicationModularInput(ModularInput):
 
         # Parse the feed
         if auth_handler is not None:
-            opener = urllib2.build_opener(auth_handler)
+            opener = build_opener(auth_handler)
             feed = opener.open(feed_url)
             d = feedparser.parse(feed)
         else:
@@ -244,6 +253,12 @@ class SyndicationModularInput(ModularInput):
 
         if len(iterative_name) > 0:
             iterative_name = name + "."
+
+        # Python 2+3 basestring
+        try:
+            basestring
+        except NameError:
+            basestring = str
 
         # Handle dictionaries
         if isinstance(item, dict):

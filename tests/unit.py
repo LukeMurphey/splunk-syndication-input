@@ -5,9 +5,11 @@ import os
 import errno
 import time
 from datetime import datetime, timedelta
-import urllib2
 
-import HTMLTestRunner
+try:
+    from urllib.request import HTTPBasicAuthHandler
+except:
+    from urllib2 import HTTPBasicAuthHandler
 
 sys.path.append( os.path.join("..", "src", "bin") )
 
@@ -180,7 +182,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
     def test_get_auth_handler(self):
         auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")   
         
-        self.assertIsInstance(auth_handler, urllib2.HTTPBasicAuthHandler)
+        self.assertIsInstance(auth_handler, HTTPBasicAuthHandler)
         
     def test_get_auth_handler_none(self):
         auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
@@ -225,8 +227,13 @@ if __name__ == '__main__':
         if exception.errno != errno.EEXIST:
             raise
 
+    unittest.main()
+
+    """
     with open(report_path, 'w') as report_file:
         test_runner = HTMLTestRunner.HTMLTestRunner(
             stream=report_file
         )
         unittest.main(testRunner=test_runner)
+    """
+

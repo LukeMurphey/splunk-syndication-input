@@ -34,4 +34,4 @@ if __name__ == '__main__':
         FeedsTail.execute()
         sys.exit(0)
     except Exception as exception:
-        print exception
+        print(exception)

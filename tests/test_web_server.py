@@ -1,4 +1,8 @@
-from BaseHTTPServer import BaseHTTPRequestHandler
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
 import base64
 

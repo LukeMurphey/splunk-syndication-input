@@ -132,6 +132,12 @@ class EventWriter(object):
             # Escape special fields that Splunk will overwrite
             converted_key = self.convert_special_fields(key)
 
+            # Python 2+3 basestring
+            try:
+                basestring
+            except NameError:
+                basestring = str
+
             # Do not include fields whose name is empty or none since this indicates that the field
             # should not be included at all
             if converted_key is None or len(converted_key) == 0:
