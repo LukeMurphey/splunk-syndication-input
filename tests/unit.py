@@ -80,21 +80,21 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
     def test_flatten_dict(self):
         
-        dict = {
+        d = {
                 'list': {
                          'one' : 'uno',
                          'two' : 'dos'
                          }
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(len(d), 2)
         self.assertEquals(d['list.one'], 'uno')
         
     def test_flatten_dict_sort(self):
         # https://lukemurphey.net/issues/2039
-        dict = {
+        d = {
                 'list': {
                          '3' : 'tres',
                          '1' : 'uno',
@@ -105,11 +105,11 @@ class TestSyndicationImport(SyndicationAppTestCase):
                          }
                 }
         
-        d = SyndicationModularInput.flatten(dict, sort=True)
+        d = SyndicationModularInput.flatten(d, sort=True)
         
         self.assertEquals(len(d), 6)
 
-        keys = d.keys()
+        keys = list(d.keys())
         self.assertEquals(keys[0], 'list.1')
         self.assertEquals(keys[1], 'list.2')
         self.assertEquals(keys[2], 'list.3')
@@ -119,14 +119,14 @@ class TestSyndicationImport(SyndicationAppTestCase):
 
     def test_flatten_list(self):
         
-        dict = {
+        d = {
                 'list': [
                          'first',
                          'second'
                          ]
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(len(d), 2)
         self.assertEquals(d['list.0'], 'first')
@@ -134,34 +134,34 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
     def test_flatten_none(self):
         
-        dict = {
+        d = {
                 'none': None
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(len(d), 1)
         self.assertEquals(d['none'], None)
         
     def test_flatten_int(self):
         
-        dict = {
+        d = {
                 'int': 1
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(len(d), 1)
         self.assertEquals(d['int'], 1)
         
     def test_flatten_boolean(self):
         
-        dict = {
+        d = {
                 'TrueDat': True,
                 'FalseDat': False
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(len(d), 2)
         self.assertEquals(d['TrueDat'], True)
@@ -171,11 +171,11 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         t = time.strptime("9 Feb 15", "%d %b %y")
         
-        dict = {
+        d = {
                 'time': t
                 }
         
-        d = SyndicationModularInput.flatten(dict)
+        d = SyndicationModularInput.flatten(d)
         
         self.assertEquals(d['time'], '2015-02-09T00:00:00Z')
     
