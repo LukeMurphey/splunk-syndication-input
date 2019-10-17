@@ -53,6 +53,9 @@ class TestWebServerHandler(BaseHTTPRequestHandler):
         else:
             return self.headers.get(header)
 
+    def write_string(self, s):
+        return self.wfile.write(self.str_to_bytes(s))
+
     def do_GET(self):
         
         # Handle an invalid authentication request
@@ -74,27 +77,25 @@ class TestWebServerHandler(BaseHTTPRequestHandler):
             username = 'admin'
             password = 'changeme'
             encoded_password = base64.b64encode(self.str_to_bytes(username + ":" + password))
-            
+
             ''' Present frontpage with user authentication. '''
             if self.get_header('Authorization') == None:
                 self.do_AUTHHEAD()
-                self.wfile.write('no auth header received')
-            elif self.get_header('Authorization') == ('Basic ' + encoded_password):
+                self.write_string('no auth header received')
+            elif self.str_to_bytes(self.get_header('Authorization')) == (self.str_to_bytes('Basic ') + encoded_password):
                 self.do_HEAD()
-                #self.wfile.write(self.get_header('Authorization'))
-                #self.wfile.write('authenticated!')
+                #self.write_string(self.get_header('Authorization'))
+                #self.write_string('authenticated!')
                 
                 with open( os.path.join("web_files", os.path.basename(self.path)), "r") as webfile:
                     self.wfile.write(self.read_bytes(webfile))
-                
-                pass
+
             else:
-                """
-                print "Auth head:", self.get_header('Authorization'), " did not match ", ('Basic ' + encoded_password)
-                print self.get_header('Authorization')[6:]
-                print base64.b64decode(self.get_header('Authorization')[6:])
-                """
+
+                print("Auth head:", self.get_header('Authorization'), " did not match ", 'Basic', encoded_password)
+                print(self.get_header('Authorization')[6:])
+                print(base64.b64decode(self.get_header('Authorization')[6:]))
+                
                 self.do_AUTHHEAD()
-                self.wfile.write(self.get_header('Authorization'))
-                self.wfile.write('not authenticated')
-                pass
+                self.write_string(self.get_header('Authorization'))
+                self.write_string('not authenticated')

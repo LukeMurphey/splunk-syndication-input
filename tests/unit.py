@@ -163,7 +163,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d)
         
-        self.assertEquals(len(d), 2)
+        self.assertEqual(len(d), 2)
         self.assertEquals(d['TrueDat'], True)
         self.assertEquals(d['FalseDat'], False)
         
@@ -172,11 +172,10 @@ class TestSyndicationImport(SyndicationAppTestCase):
         t = time.strptime("9 Feb 15", "%d %b %y")
         
         d = {
-                'time': t
-                }
+            'time': t
+        }
         
         d = SyndicationModularInput.flatten(d)
-        
         self.assertEquals(d['time'], '2015-02-09T00:00:00Z')
     
     def test_get_auth_handler(self):

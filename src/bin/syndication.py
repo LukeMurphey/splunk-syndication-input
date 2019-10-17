@@ -265,9 +265,12 @@ class SyndicationModularInput(ModularInput):
             for key in item:
                 cls.flatten(item[key], dictionary, iterative_name + key)
 
+        # Handle date
+        elif item.__class__.__name__ == "struct_time":
+            dictionary[name] = time.strftime('%Y-%m-%dT%H:%M:%SZ', item)
+
         # Handle arrays
         elif not isinstance(item, basestring) and isinstance(item, (list, tuple)):
-
             index = 0
 
             for entry in item:
@@ -275,14 +278,9 @@ class SyndicationModularInput(ModularInput):
 
                 index = index + 1
 
-
         # Handle plain values
         elif item in [True, False, None]:
             dictionary[name] = item
-
-        # Handle date
-        elif item.__class__.__name__ == "struct_time":
-            dictionary[name] = time.strftime('%Y-%m-%dT%H:%M:%SZ', item)
 
         # Handle string values
         else:
