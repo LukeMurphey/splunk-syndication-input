@@ -13,7 +13,12 @@ from datetime import datetime, timedelta, tzinfo
 import time
 import random
 import re
-from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+from splunk.clilib.bundle_paths import make_splunkhome_path
+
+try:
+    basestring
+except:
+    basestring = str
 
 # Python handles datetimes badly, really badly. Below is a UTC timezone implementation since
 # Python does not include one by default
@@ -132,12 +137,6 @@ class EventWriter(object):
             # Escape special fields that Splunk will overwrite
             converted_key = self.convert_special_fields(key)
 
-            # Python 2+3 basestring
-            try:
-                basestring
-            except NameError:
-                basestring = str
-
             # Do not include fields whose name is empty or none since this indicates that the field
             # should not be included at all
             if converted_key is None or len(converted_key) == 0:
@@ -154,7 +153,7 @@ class EventWriter(object):
                 result_value = str(result[key])
 
                 # If the field is blank then do not include it if we are supposed to exclude it
-                if result_value <= 0 and ignore_empty_fields == True:
+                if len(result_value) <= 0 and ignore_empty_fields == True:
                     pass # Ignore this field and continue to the next field value
                 else:
                      #TODO: need to figure out if field names must be escaped
