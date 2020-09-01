@@ -343,37 +343,47 @@ class SyndicationModularInput(ModularInput):
                 last_entry_date = None
 
             # Get the feed information
-            results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password, clean_html=clean_html)
-            self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
+            results = None
+            last_entry_date_retrieved = None
 
-            # Output the event
-            for result in results:
-                # Send the event
-                if self.OUTPUT_USING_STASH:
+            try:
+                results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password, clean_html=clean_html)
+            except:
+                self.logger.exception("Unable to get the feed, url=%s", feed_url.geturl())
+                result = None
 
-                    # Write the event as a stash new file
-                    writer = StashNewWriter(index=index, source_name=source, file_extension=".stash_syndication_input", sourcetype=sourcetype, host=host)
-                    self.logger.debug("Wrote stash file=%s", writer.write_event(result))
+            # Process the results
+            if results is not None:
+                self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
 
+                # Output the event
+                for result in results:
+                    # Send the event
+                    if self.OUTPUT_USING_STASH:
+
+                        # Write the event as a stash new file
+                        writer = StashNewWriter(index=index, source_name=source, file_extension=".stash_syndication_input", sourcetype=sourcetype, host=host)
+                        self.logger.debug("Wrote stash file=%s", writer.write_event(result))
+
+                    else:
+                        #self.logger.debug("Generating event, count=%i, url=%s", len(results), feed_url.geturl())
+                        self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
+
+                # Get the time that the input last ran
+                if checkpoint_data is not None and 'last_ran' in checkpoint_data:
+                    last_ran = checkpoint_data['last_ran']
                 else:
-                    #self.logger.debug("Generating event, count=%i, url=%s", len(results), feed_url.geturl())
-                    self.output_event(result, stanza, index=index, source=source, sourcetype=sourcetype, host=host, unbroken=True, close=True)
+                    last_ran = None
 
-            # Get the time that the input last ran
-            if checkpoint_data is not None and 'last_ran' in checkpoint_data:
-                last_ran = checkpoint_data['last_ran']
-            else:
-                last_ran = None
+                # Show a warning if no results were loaded but the last entry date is being updated (that shouldn't happen)
+                if len(results) == 0 and last_entry_date_retrieved > last_entry_date:
+                    self.logger.warn("Latest entry date changed even though no entries were loaded, last_entry_date=$s, last_entry_date_retrieved=%s", last_entry_date, last_entry_date_retrieved)
 
-            # Show a warning if no results were loaded but the last entry date is being updated (that shouldn't happen)
-            if len(results) == 0 and last_entry_date_retrieved > last_entry_date:
-                self.logger.warn("Latest entry date changed even though no entries were loaded, last_entry_date=$s, last_entry_date_retrieved=%s", last_entry_date, last_entry_date_retrieved)
+                # Save the checkpoint so that we remember when we last
+                if last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
+                    last_entry_date = last_entry_date_retrieved
 
-            # Save the checkpoint so that we remember when we last
-            if last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
-                last_entry_date = last_entry_date_retrieved
-
-            self.save_checkpoint(input_config.checkpoint_dir, stanza,  self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
+                self.save_checkpoint(input_config.checkpoint_dir, stanza,  self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
 
 if __name__ == '__main__':
     try:
