@@ -227,12 +227,3 @@ if __name__ == '__main__':
             raise
 
     unittest.main()
-
-    """
-    with open(report_path, 'w') as report_file:
-        test_runner = HTMLTestRunner.HTMLTestRunner(
-            stream=report_file
-        )
-        unittest.main(testRunner=test_runner)
-    """
-
