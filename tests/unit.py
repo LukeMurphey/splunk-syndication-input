@@ -26,7 +26,7 @@ class SyndicationAppTestCase(UnitTestWithWebServer):
 class TestSyndicationImport(SyndicationAppTestCase):
     
     def test_import_rss_public(self):
-        results = SyndicationModularInput.get_feed("http://answers.splunk.com/feed/questions.rss")
+        results = SyndicationModularInput.get_feed("https://www.str.org/article-feed/-/journal/rss/20123/264695")
         
         self.assertGreaterEqual(len(results), 10)
         
