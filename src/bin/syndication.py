@@ -376,7 +376,7 @@ class SyndicationModularInput(ModularInput):
                     last_ran = None
 
                 # Show a warning if no results were loaded but the last entry date is being updated (that shouldn't happen)
-                if len(results) == 0 and last_entry_date_retrieved > last_entry_date:
+                if len(results) == 0 and last_entry_date_retrieved is not None and last_entry_date is not None and last_entry_date_retrieved > last_entry_date:
                     self.logger.warn("Latest entry date changed even though no entries were loaded, last_entry_date=$s, last_entry_date_retrieved=%s", last_entry_date, last_entry_date_retrieved)
 
                 # Save the checkpoint so that we remember when we last
