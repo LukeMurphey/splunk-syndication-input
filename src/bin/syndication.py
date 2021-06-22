@@ -8,9 +8,9 @@ import time
 import re
 import os
 try:
-    from urllib.request import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener
+    from urllib.request import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener, ProxyHandler
 except:
-    from urllib2 import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener
+    from urllib2 import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener, ProxyHandler
 from collections import OrderedDict
 
 path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
@@ -44,7 +44,8 @@ class SyndicationModularInput(ModularInput):
                 Field("username", "Username", "The username to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 Field("password", "Password", "The password to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False),
-                BooleanField("clean_html", "Convert HTML to Text", "Convert HTML to human readable text", empty_allowed=False)
+                BooleanField("clean_html", "Convert HTML to Text", "Convert HTML to human readable text", empty_allowed=False),
+                URLField("proxy","Proxy URL","URL for proxy",empty_allowed=True)
                 ]
 
         ModularInput.__init__( self, scheme_args, args, logger_name='syndication_modular_input' )
@@ -138,7 +139,34 @@ class SyndicationModularInput(ModularInput):
         return auth_handler
 
     @classmethod
-    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None, username=None, password=None, clean_html=True):
+    def get_proxy_handler(cls, proxy, logger=None):
+        """
+        Create a ProxyHandler object used by urllib.
+
+        Arguments:
+        proxy -- Proxy URL
+        """
+
+        proxy_handler = None
+        mapping = None
+
+        # Make the associated proxy handler
+        if proxy == None:
+            return None
+        else:
+            if proxy.scheme is not None and proxy.hostname is not None:
+                if proxy.scheme = 'http' or proxy.scheme = 'https':
+                    mapping["http"] = proxy.netloc
+                    mapping["https"] = proxy.netloc
+                else:
+                    mapping[proxy.scheme] = proxy.netloc
+
+                proxy_handler = ProxyHandler(mapping)
+
+        return proxy_handler
+
+    @classmethod
+    def get_feed(cls, feed_url, return_latest_date=False, include_later_than=None, logger=None, username=None, password=None, clean_html=True, proxy=None):
         """
         Get the feed results as a dictionary.
 
@@ -153,14 +181,23 @@ class SyndicationModularInput(ModularInput):
         """
 
         auth_handler = None
+        proxy_handler = None
 
         # Get an authentication handler if needed
         if username is not None and password is not None:
             auth_handler = cls.get_auth_handler(feed_url, username, password, logger)
 
+        # Get a proxy handler if needed
+        if proxy is not None:
+            proxy_handler = cls.get_proxy_handler(proxy, logger)
+
         # Parse the feed
         if auth_handler is not None:
             opener = build_opener(auth_handler)
+            feed = opener.open(feed_url)
+            d = feedparser.parse(feed)
+        elif proxy_handler is not None:
+            opener = build_opener(proxy_handler)
             feed = opener.open(feed_url)
             d = feedparser.parse(feed)
         else:
@@ -322,6 +359,7 @@ class SyndicationModularInput(ModularInput):
         host = cleaned_params.get("host", None)
         index = cleaned_params.get("index", "default")
         clean_html = cleaned_params.get("clean_html", False)
+        proxy = cleaned_params["proxy"]
         source = stanza
 
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
@@ -347,7 +385,7 @@ class SyndicationModularInput(ModularInput):
             last_entry_date_retrieved = None
 
             try:
-                results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password, clean_html=clean_html)
+                results, last_entry_date_retrieved = self.get_feed(feed_url.geturl(), return_latest_date=True, include_later_than=last_entry_date, logger=self.logger, username=username, password=password, clean_html=clean_html, proxy=proxy)
             except:
                 self.logger.exception("Unable to get the feed, url=%s", feed_url.geturl())
                 result = None
