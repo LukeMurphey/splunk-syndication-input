@@ -19,3 +19,6 @@ password = <value>
 
 clean_html = <value>
 * Indicates if the HTML content in the output to human readable text
+
+proxy = <value>
+* Defines the proxy through which connection will be made via
