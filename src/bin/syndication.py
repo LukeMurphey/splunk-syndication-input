@@ -7,6 +7,7 @@ import sys
 import time
 import re
 import os
+import logging
 try:
     from urllib.request import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener, ProxyHandler
 except:
@@ -48,7 +49,7 @@ class SyndicationModularInput(ModularInput):
                 URLField("proxy", "Proxy URL", "URL for proxy", empty_allowed=True, none_allowed=True, required_on_create=False, required_on_edit=False)
                 ]
 
-        ModularInput.__init__( self, scheme_args, args, logger_name='syndication_modular_input' )
+        ModularInput.__init__(self, scheme_args, args, logger_name='syndication_modular_input', logger_level=logging.INFO)
 
     @classmethod
     def get_updated_date(cls, entry):
@@ -390,6 +391,11 @@ class SyndicationModularInput(ModularInput):
                 self.logger.exception("Unable to get the feed, url=%s", feed_url.geturl())
                 result = None
 
+            if last_entry_date_retrieved is not None:
+                self.logger.debug("Latest date from feed retrieved, last_entry_date_retrieved=%i", time.mktime(last_entry_date_retrieved))
+            else:
+                self.logger.debug("Latest date from feed was not retrieved")
+
             # Process the results
             if results is not None:
                 self.logger.info("Successfully retrieved feed entries, count=%i, url=%s", len(results), feed_url.geturl())
@@ -420,16 +426,18 @@ class SyndicationModularInput(ModularInput):
                 # Handle the case where no last_entry_date could be loaded
                 if last_entry_date is None:
                     if results == None:
-                        result_count = 'none'
+                        self.logger.warn("Latest entry date was not found, no results found")
                     else:
                         result_count = len(results)
+                        last_entry_date = time.localtime()
                     
-                    self.logger.warn("Latest entry date was not found, result_count=$r", result_count)
+                        self.logger.warn("Latest entry date was not found, result_count=$i", result_count)
 
-                # Save the checkpoint so that we remember when we last
+                # Set the last last_entry_date to the lastest entry retrieved
                 elif last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
                     last_entry_date = last_entry_date_retrieved
 
+                # Save the checkpoint so that we remember when we last
                 self.save_checkpoint(input_config.checkpoint_dir, stanza, self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
 
 if __name__ == '__main__':
