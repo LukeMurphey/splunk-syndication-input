@@ -72,4 +72,5 @@ Change History
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.2.5   | Updating the mod input library to 2.1.15                                                                         |
 |         | Improving appinspect issues                                                                                      |
+|         | Improving handling of cases in which the latest entry date could not be found                                    |
 +---------+------------------------------------------------------------------------------------------------------------------+

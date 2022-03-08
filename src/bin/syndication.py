@@ -417,8 +417,17 @@ class SyndicationModularInput(ModularInput):
                 if len(results) == 0 and last_entry_date_retrieved is not None and last_entry_date is not None and last_entry_date_retrieved > last_entry_date:
                     self.logger.warn("Latest entry date changed even though no entries were loaded, last_entry_date=$s, last_entry_date_retrieved=%s", last_entry_date, last_entry_date_retrieved)
 
+                # Handle the case where no last_entry_date could be loaded
+                if last_entry_date is None:
+                    if results == None:
+                        result_count = 'none'
+                    else:
+                        result_count = len(results)
+                    
+                    self.logger.warn("Latest entry date was not found, result_count=$r", result_count)
+
                 # Save the checkpoint so that we remember when we last
-                if last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
+                elif last_entry_date_retrieved is not None and last_entry_date_retrieved > last_entry_date:
                     last_entry_date = last_entry_date_retrieved
 
                 self.save_checkpoint(input_config.checkpoint_dir, stanza, self.get_non_deviated_last_run(last_ran, interval, stanza), last_entry_date)
