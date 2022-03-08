@@ -29,7 +29,13 @@
 	          <view name="create"/>
 	          <key name="exampleText">The interval defining how often to check for new entries; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)</key>
 	        </element>
-	        
+
+	        <element name="proxy" type="textfield" label="Proxy">
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The URL of a proxy server to use (leave blank if not using a proxy)</key>
+	        </element>
+			
 	        <element name="include_only_changed" type="checkbox" label="Include only new or changed entries">
 	          <view name="edit"/>
 	          <view name="create"/>

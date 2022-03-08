@@ -45,7 +45,7 @@ class SyndicationModularInput(ModularInput):
                 Field("password", "Password", "The password to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 DurationField("interval", "Interval", "The interval defining how often to import the feed; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False),
                 BooleanField("clean_html", "Convert HTML to Text", "Convert HTML to human readable text", empty_allowed=False),
-                URLField("proxy","Proxy URL","URL for proxy",empty_allowed=True)
+                URLField("proxy", "Proxy URL", "URL for proxy", empty_allowed=True, none_allowed=True, required_on_create=False, required_on_edit=False)
                 ]
 
         ModularInput.__init__( self, scheme_args, args, logger_name='syndication_modular_input' )
