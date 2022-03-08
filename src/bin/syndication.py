@@ -359,7 +359,7 @@ class SyndicationModularInput(ModularInput):
         host = cleaned_params.get("host", None)
         index = cleaned_params.get("index", "default")
         clean_html = cleaned_params.get("clean_html", False)
-        proxy = cleaned_params["proxy"]
+        proxy = cleaned_params.get("proxy", None)
         source = stanza
 
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
