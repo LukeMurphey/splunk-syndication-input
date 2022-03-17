@@ -11,6 +11,11 @@ try:
 except:
     from urllib2 import HTTPBasicAuthHandler
 
+try:
+    from urlparse import urlparse
+except:
+    from urllib.parse import urlparse
+
 sys.path.append( os.path.join("..", "src", "bin") )
 
 from syndication import SyndicationModularInput
@@ -78,6 +83,45 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         self.assertGreaterEqual(len(results), 0)
         
+    def test_basic_auth_rss(self):
+        
+        username = 'admin'
+        password = 'changeme'    
+        
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")
+        
+        self.assertEqual(len(results), 2)
+
+    def test_cleanup_html_rss(self):  
+        # https://lukemurphey.net/issues/2038
+        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_with_html.xml", clean_html=True)
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[2]['content.0.value'][:120], "  1. **Introduction**\n\nIt seems that Google Chrome extensions have become quite the tool for banking\nmalware fraudsters.")
+
+    def test_get_auth_handler(self):
+        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertIsInstance(auth_handler, HTTPBasicAuthHandler)
+        
+    def test_get_auth_handler_none(self):
+        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEqual(auth_handler, None)
+
+    def test_get_realm_and_auth_type(self):
+        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEqual(auth_realm, None)
+        self.assertEqual(auth_type, None)
+
+    def test_get_realm_and_auth_type_invalid(self):
+        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/invalid_auth/rss_example.xml", username="admin", password="changeme")   
+        
+        self.assertEqual(auth_realm, None)
+        self.assertEqual(auth_type, None)
+   
+class TestSyndicationOffline(unittest.TestCase):
     def test_flatten_dict(self):
         
         d = {
@@ -89,8 +133,8 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d)
         
-        self.assertEquals(len(d), 2)
-        self.assertEquals(d['list.one'], 'uno')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(d['list.one'], 'uno')
         
     def test_flatten_dict_sort(self):
         # https://lukemurphey.net/issues/2039
@@ -107,15 +151,15 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d, sort=True)
         
-        self.assertEquals(len(d), 6)
+        self.assertEqual(len(d), 6)
 
         keys = list(d.keys())
-        self.assertEquals(keys[0], 'list.1')
-        self.assertEquals(keys[1], 'list.2')
-        self.assertEquals(keys[2], 'list.3')
-        self.assertEquals(keys[3], 'list.4')
-        self.assertEquals(keys[4], 'list.5')
-        self.assertEquals(keys[5], 'list.6')
+        self.assertEqual(keys[0], 'list.1')
+        self.assertEqual(keys[1], 'list.2')
+        self.assertEqual(keys[2], 'list.3')
+        self.assertEqual(keys[3], 'list.4')
+        self.assertEqual(keys[4], 'list.5')
+        self.assertEqual(keys[5], 'list.6')
 
     def test_flatten_list(self):
         
@@ -128,9 +172,9 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d)
         
-        self.assertEquals(len(d), 2)
-        self.assertEquals(d['list.0'], 'first')
-        self.assertEquals(d['list.1'], 'second')
+        self.assertEqual(len(d), 2)
+        self.assertEqual(d['list.0'], 'first')
+        self.assertEqual(d['list.1'], 'second')
         
     def test_flatten_none(self):
         
@@ -140,8 +184,8 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d)
         
-        self.assertEquals(len(d), 1)
-        self.assertEquals(d['none'], None)
+        self.assertEqual(len(d), 1)
+        self.assertEqual(d['none'], None)
         
     def test_flatten_int(self):
         
@@ -151,8 +195,8 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         d = SyndicationModularInput.flatten(d)
         
-        self.assertEquals(len(d), 1)
-        self.assertEquals(d['int'], 1)
+        self.assertEqual(len(d), 1)
+        self.assertEqual(d['int'], 1)
         
     def test_flatten_boolean(self):
         
@@ -164,8 +208,8 @@ class TestSyndicationImport(SyndicationAppTestCase):
         d = SyndicationModularInput.flatten(d)
         
         self.assertEqual(len(d), 2)
-        self.assertEquals(d['TrueDat'], True)
-        self.assertEquals(d['FalseDat'], False)
+        self.assertEqual(d['TrueDat'], True)
+        self.assertEqual(d['FalseDat'], False)
         
     def test_flatten_time(self):
         
@@ -176,54 +220,14 @@ class TestSyndicationImport(SyndicationAppTestCase):
         }
         
         d = SyndicationModularInput.flatten(d)
-        self.assertEquals(d['time'], '2015-02-09T00:00:00Z')
-    
-    def test_get_auth_handler(self):
-        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")   
-        
-        self.assertIsInstance(auth_handler, HTTPBasicAuthHandler)
-        
-    def test_get_auth_handler_none(self):
-        auth_handler = SyndicationModularInput.get_auth_handler("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
-        
-        self.assertEquals(auth_handler, None)
+        self.assertEqual(d['time'], '2015-02-09T00:00:00Z')
 
-    def test_get_realm_and_auth_type(self):
-        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/rss_example.xml", username="admin", password="changeme")   
-        
-        self.assertEquals(auth_realm, None)
-        self.assertEquals(auth_type, None)
+    def test_get_proxy_handler_none(self):
+        self.assertIsNone(SyndicationModularInput.get_proxy_handler(None))
 
-    def test_get_realm_and_auth_type_invalid(self):
-        auth_realm, auth_type = SyndicationModularInput.get_realm_and_auth_type("http://127.0.0.1:8888/invalid_auth/rss_example.xml", username="admin", password="changeme")   
-        
-        self.assertEquals(auth_realm, None)
-        self.assertEquals(auth_type, None)
-    
-    def test_basic_auth_rss(self):
-        
-        username = 'admin'
-        password = 'changeme'    
-        
-        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/auth/rss_example.xml", username="admin", password="changeme")
-        
-        self.assertEqual(len(results), 2)
-
-    def test_cleanup_html_rss(self):  
-        # https://lukemurphey.net/issues/2038
-        results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_with_html.xml", clean_html=True)
-
-        self.assertEqual(len(results), 3)
-        self.assertEqual(results[2]['content.0.value'][:120], "  1. **Introduction**\n\nIt seems that Google Chrome extensions have become quite the tool for banking\nmalware fraudsters.")
+    def test_get_proxy_handler(self):
+        url = urlparse("http://127.0.0.1:8080")
+        self.assertIsNotNone(SyndicationModularInput.get_proxy_handler(url))
     
 if __name__ == '__main__':
-    report_path = os.path.join('..', os.environ.get('TEST_OUTPUT', 'tmp/test_report.html'))
-
-    # Make the test directory
-    try:
-        os.makedirs(os.path.dirname(report_path))
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
     unittest.main()
