@@ -156,6 +156,7 @@ class SyndicationModularInput(ModularInput):
             return None
         else:
             if proxy.scheme is not None and proxy.hostname is not None:
+                mapping = {}
                 if proxy.scheme == 'http' or proxy.scheme == 'https':
                     mapping["http"] = proxy.netloc
                     mapping["https"] = proxy.netloc
