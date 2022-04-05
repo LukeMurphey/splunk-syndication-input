@@ -228,15 +228,15 @@ class SyndicationModularInput(ModularInput):
                     if include_later_than is not None and entry_date <= include_later_than:
 
                         if logger is not None:
-                            logger.debug("Skipping entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
+                            logger.debug("Skipping entry with date=%r, since it's not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
 
                         continue
 
                     elif logger is not None and include_later_than is not None:
-                        logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
+                        logger.debug("Including entry with date=%r, since it's later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), time.strftime('%Y-%m-%dT%H:%M:%SZ', include_later_than), entry.title)
 
                     elif logger is not None and include_later_than is None:
-                        logger.debug("Including entry with date=%r, since its not later than latest_date=%r, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), "none", entry.title)
+                        logger.debug("Including entry with date=%r, since there is no checkpoint date, title=\"%s\"", time.strftime('%Y-%m-%dT%H:%M:%SZ', entry_date), entry.title)
 
                 # Clean up the HTML if requested
                 if clean_html:
@@ -378,7 +378,7 @@ class SyndicationModularInput(ModularInput):
             # Try to load the last entry date from the checkpoint data
             if include_only_changed and checkpoint_data is not None and 'last_entry_date' in checkpoint_data:
                 last_entry_date = time.localtime(checkpoint_data['last_entry_date'])
-                self.logger.debug("Loaded latest entry date from checkpoint, last_entry_date=%s", last_entry_date)
+                self.logger.debug("Loaded latest entry date from checkpoint, last_entry_date=%s", time.strftime('%Y-%m-%dT%H:%M:%SZ', last_entry_date))
             else:
                 last_entry_date = None
 
