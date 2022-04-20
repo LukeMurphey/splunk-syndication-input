@@ -102,7 +102,7 @@ class EventWriter(object):
         raise NotImplementedError("The write_events function must be implemented by sub-classes \
         of EventWriter")
 
-    def event_to_string(self, result, event_time, ignore_empty_fields=True):
+    def event_to_string(self, result, event_time=None, ignore_empty_fields=True):
         """
         Produces a single line event that represents a single event (for the stash).
 
@@ -114,7 +114,10 @@ class EventWriter(object):
 
         # Populate the event time if not provided
         if event_time is None:
-            event_time = datetime.now(utc)
+            if '_time' in result:
+                event_time = result['_time']
+            else:
+                event_time = datetime.now(utc)
 
         # Get the timestamp formatted correctly for Splunk (e.g. 05/13/2011 14:35:00)
         date_str = event_time.strftime("%m/%d/%Y %H:%M:%S UTC")
@@ -340,13 +343,7 @@ class StashNewWriter(EventWriter):
             if is_raw_string:
                 stash_file_h.write(event)
             else:
-                if "updated_parsed" in list(event.keys()):
-                    timestamp = datetime.fromtimestamp(time.mktime(time.strptime(event["updated_parsed"], "%Y-%m-%dT%H:%M:%SZ")))
-                elif "published_parsed" in list(event.keys()):
-                    timestamp = datetime.fromtimestamp(time.mktime(time.strptime(event["published_parsed"], "%Y-%m-%dT%H:%M:%SZ")))
-                else:
-                    timestamp = datetime.now(utc)
-                stash_file_h.write(self.event_to_string(event, event_time=timestamp))
+                stash_file_h.write(self.event_to_string(event))
 
             stash_file_h.write("\n")
 

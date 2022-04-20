@@ -120,7 +120,7 @@ class TestSyndicationImport(SyndicationAppTestCase):
         
         self.assertEqual(auth_realm, None)
         self.assertEqual(auth_type, None)
-   
+
 class TestSyndicationOffline(unittest.TestCase):
     def test_flatten_dict(self):
         
@@ -228,6 +228,34 @@ class TestSyndicationOffline(unittest.TestCase):
     def test_get_proxy_handler(self):
         url = urlparse("http://127.0.0.1:8080")
         self.assertIsNotNone(SyndicationModularInput.get_proxy_handler(url))
+
+    def test_get_timestamp_updated(self):
+        event = {
+            'updated_parsed': '2022-03-10T10:45:00Z'
+        }
+
+        self.assertEqual(SyndicationModularInput.get_timestamp(event), datetime(2022, 3, 10, 10, 45))
     
+    def test_get_timestamp_published(self):
+        event = {
+            'published_parsed': '2022-03-10T10:46:00Z'
+        }
+
+        self.assertEqual(SyndicationModularInput.get_timestamp(event), datetime(2022, 3, 10, 10, 46))
+    
+    def test_get_timestamp_default(self):
+        event = {
+            'noasdasd': 'Not a date!'
+        }
+
+        self.assertIsNotNone(SyndicationModularInput.get_timestamp(event))
+
+    def test_get_timestamp_bad_time(self):
+        event = {
+            'published_parsed': 'Not a date!'
+        }
+
+        self.assertIsNotNone(SyndicationModularInput.get_timestamp(event))
+
 if __name__ == '__main__':
     unittest.main()

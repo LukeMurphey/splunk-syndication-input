@@ -8,6 +8,8 @@ import time
 import re
 import os
 import logging
+from datetime import datetime
+
 try:
     from urllib.request import HTTPBasicAuthHandler, HTTPDigestAuthHandler, build_opener, ProxyHandler
 except:
@@ -17,7 +19,7 @@ from collections import OrderedDict
 path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
 sys.path.insert(0, path_to_mod_input_lib)
 from modular_input import ModularInput, URLField, DurationField, BooleanField, Field
-from syndication_app.event_writer import StashNewWriter
+from syndication_app.event_writer import StashNewWriter, utc
 
 path_to_app_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'syndication_app')
 sys.path.insert(0, path_to_app_lib)
@@ -349,6 +351,17 @@ class SyndicationModularInput(ModularInput):
         else:
             self.save_checkpoint_data(checkpoint_dir, stanza, { 'last_run' : last_run })
 
+    @classmethod
+    def get_timestamp(cls, event):
+        try:
+            if "updated_parsed" in list(event.keys()):
+                return datetime.fromtimestamp(time.mktime(time.strptime(event["updated_parsed"], "%Y-%m-%dT%H:%M:%SZ")))
+            elif "published_parsed" in list(event.keys()):
+                return datetime.fromtimestamp(time.mktime(time.strptime(event["published_parsed"], "%Y-%m-%dT%H:%M:%SZ")))
+            return datetime.now(utc)
+        except ValueError:
+            return datetime.now(utc)
+
     def run(self, stanza, cleaned_params, input_config):
 
         # Make the parameters
@@ -405,6 +418,8 @@ class SyndicationModularInput(ModularInput):
                 for result in results:
                     # Send the event
                     if self.OUTPUT_USING_STASH:
+                        # Get the time
+                        result['_time'] = self.get_timestamp(result)
 
                         # Write the event as a stash new file
                         writer = StashNewWriter(index=index, source_name=source, file_extension=".stash_syndication_input", sourcetype=sourcetype, host=host)
