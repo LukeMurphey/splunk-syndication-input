@@ -120,7 +120,11 @@ class EventWriter(object):
                 event_time = datetime.now(utc)
 
         # Get the timestamp formatted correctly for Splunk (e.g. 05/13/2011 14:35:00)
-        date_str = event_time.strftime("%m/%d/%Y %H:%M:%S UTC")
+        try:
+            date_str = event_time.strftime("%m/%d/%Y %H:%M:%S UTC")
+        except:
+            # Yikes, that couldn't be parsed; ues the current time then
+            date_str = datetime.now(utc).strftime("%m/%d/%Y %H:%M:%S UTC")
 
         # Start the event with the date
         event = date_str
