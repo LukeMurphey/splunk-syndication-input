@@ -42,7 +42,7 @@ class SyndicationModularInput(ModularInput):
                        'use_single_instance': "true"}
 
         args = [
-                URLField("url", "Feed URL", "The URL of the feed to input", empty_allowed=False),
+                URLField("url", "Feed URL", "The URL of the feed to input", empty_allowed=False, require_https_on_cloud=True),
                 BooleanField("include_only_changed", "Include only new or changed entries", "Only include entries that has not been indexed yet (won't get items that were already observed)", empty_allowed=False),
                 Field("username", "Username", "The username to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
                 Field("password", "Password", "The password to use for authenticating (only HTTP authentication supported)", none_allowed=True, empty_allowed=True, required_on_create=False, required_on_edit=False),
