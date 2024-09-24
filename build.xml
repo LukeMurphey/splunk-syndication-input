@@ -1,5 +1,14 @@
 <project default="package" name="syndication">
 		
 	<import file="basebuild.xml"/>
+
+    <target name="update_py_libs" description="Update the Python libraries" depends="initialize_properties">
+        <exec failonerror="true" executable="pip">
+        	<arg line="install" />
+        	<arg line="--target" />
+        	<arg line="${value.src.directory}/bin/syndication_app" />
+			<arg line="feedparser" />
+        </exec>
+    </target>
 		
 </project>
