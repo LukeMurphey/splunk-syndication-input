@@ -1,5 +1,5 @@
 # Support for the GeoRSS format
-# Copyright 2010-2019 Kurt McKee <contactme@kurtmckee.org>
+# Copyright 2010-2023 Kurt McKee <contactme@kurtmckee.org>
 # Copyright 2002-2008 Mark Pilgrim
 # All rights reserved.
 #
@@ -26,8 +26,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+# Required for Python 3.6 compatibility.
+from __future__ import generator_stop
 
 from ..util import FeedParserDict
 
@@ -91,6 +91,8 @@ class Namespace(object):
         except ValueError:
             srs_dimension = 2
         context = self._get_context()
+        if 'where' not in context:
+            context['where'] = {}
         context['where']['srsName'] = srs_name
         context['where']['srsDimension'] = srs_dimension
 
