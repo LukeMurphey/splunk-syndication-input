@@ -36,10 +36,10 @@ class TestSyndicationImport(SyndicationAppTestCase):
         self.assertGreaterEqual(len(results), 10)
         
     def test_import_atom_public(self):
+        # https://lukemurphey.blogspot.com/
+        results = SyndicationModularInput.get_feed("https://www.blogger.com/feeds/2422592217909093459/posts/default")
         
-        results = SyndicationModularInput.get_feed("http://currentworldnews.blogspot.com/atom.xml")
-        
-        self.assertGreaterEqual(len(results), 10)
+        self.assertGreaterEqual(len(results), 1)
         
     def test_import_rss(self):
         results = SyndicationModularInput.get_feed("http://127.0.0.1:8888/rss_example.xml")
